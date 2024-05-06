@@ -1,6 +1,6 @@
+### Project description
 
-
-The modified code utilizes the following dictionary which holds each parameter and its corresponding optimization status. I will initialize the system with the optimization status false for all parameters. 
+This version of the optimization algorithm utilizes ADAM optimization for one parameter at a time. It utilizes the following dictionary which holds each parameter and its corresponding optimization status. I will initialize the system with the optimization status false for all parameters. 
 
 ```python
 self.optimization_status = {
@@ -13,36 +13,60 @@ self.optimization_status = {
 In the main `optimize_count` function I upgraded the code to utilize this dictionary to update one parameter at a time. The update of the parameter values for the second and third dispersion will only occur after the previous parameter has been optimized (focus is the initial optimization parameter).
 
 ```python
-def optimize_count(self):
-	self.calc_derivatives()
-	self.calc_estimated_momentum() # calc estimated biased and unbaised momentum estimates
-	self.calc_squared_grad() # calc estimated biased and unbaised squared gradient estimates
-	if not self.optimization_status["focus"]:
-		if np.abs((self.focus_learning_rate_history[-1]*self.biased_momentum_estimate_history[-1])/(np.sqrt(self.biased_squared_gradient_history[-1])+self.epsilon)) > 1:
-			self.new_focus = self.focus_history[-1] - ((self.focus_learning_rate_history[-1]*self.biased_momentum_estimate_history[-1])/(np.sqrt(self.biased_squared_gradient_history[-1])+self.epsilon))      
-			self.new_focus = np.clip(self.new_focus, self.FOCUS_LOWER_BOUND, self.FOCUS_UPPER_BOUND)
-			self.new_focus = round(self.new_focus)
-			self.focus_history = np.append(self.focus_history, [self.new_focus])
-			mirror_values[0] = self.new_focus
+    def optimize_count(self):
+        self.calc_derivatives()
 
-	if self.optimization_status["focus"] == True:
-		if np.abs((self.second_dispersion_learning_rate_history[-1]*self.biased_momentum_estimate_history[-1])/(np.sqrt(self.biased_squared_gradient_history[-1])+self.epsilon)) > 1:                                        
-			self.new_second_dispersion = self.second_dispersion_history[-1] - ((self.second_dispersion_learning_rate_history[-1]*self.biased_momentum_estimate_history[-1])/(np.sqrt(self.biased_squared_gradient_history[-1])+self.epsilon))
-			self.new_second_dispersion = np.clip(self.new_second_dispersion, self.SECOND_DISPERSION_LOWER_BOUND, self.SECOND_DISPERSION_UPPER_BOUND)
-			self.new_second_dispersion = round(self.new_second_dispersion)
-			self.second_dispersion_history = np.append(self.second_dispersion_history, [self.new_second_dispersion])
-			dispersion_values[0] = self.new_second_dispersion
+        self.calc_estimated_momentum() # calc estimated biased and unbaised momentum estimates 
+        self.calc_squared_grad() # calc estimated biased and unbaised squared gradient estimates 
 
-	if self.optimization_status["focus"] == True and self.optimization_status["second_dispersion"] == True:
-		if np.abs((self.third_dispersion_learning_rate_history[-1]*self.biased_momentum_estimate_history[-1])/(np.sqrt(self.biased_squared_gradient_history[-1])+self.epsilon)) > 1:
-			self.new_third_dispersion = self.third_dispersion_history[-1] - ((self.third_dispersion_learning_rate_history[-1]*self.biased_momentum_estimate_history[-1])/(np.sqrt(self.biased_squared_gradient_history[-1])+self.epsilon))
-			self.new_third_dispersion = np.clip(self.new_third_dispersion, self.THIRD_DISPERSION_LOWER_BOUND, self.THIRD_DISPERSION_UPPER_BOUND)
-			self.new_third_dispersion = round(self.new_third_dispersion)
-			self.third_dispersion_history = np.append(self.third_dispersion_history, [self.new_third_dispersion])
-			dispersion_values[1] = self.new_third_dispersion
+        if not self.optimization_status["focus"]:
+            if np.abs((self.focus_learning_rate_history[-1]*self.biased_momentum_estimate_history[-1])/(np.sqrt(self.biased_squared_gradient_history[-1])+self.epsilon)) > 1:
+                self.new_focus = self.focus_history[-1] - ((self.focus_learning_rate_history[-1]*self.biased_momentum_estimate_history[-1])/(np.sqrt(self.biased_squared_gradient_history[-1])+self.epsilon))      
+                self.new_focus = np.clip(self.new_focus, self.FOCUS_LOWER_BOUND, self.FOCUS_UPPER_BOUND)
+                self.new_focus = round(self.new_focus)
+                self.focus_history = np.append(self.focus_history, [self.new_focus])
+                mirror_values[0] = self.new_focus
+
+            elif np.abs(((self.focus_learning_rate_history[-1]*self.biased_momentum_estimate_history[-1])/(np.sqrt(self.biased_squared_gradient_history[-1])+self.epsilon))) < 1:
+                print("Convergence achieved in focus")
+        
+        if self.optimization_status["focus"] == True:
+            if np.abs((self.second_dispersion_learning_rate_history[-1]*self.biased_momentum_estimate_history[-1])/(np.sqrt(self.biased_squared_gradient_history[-1])+self.epsilon)) > 1:                                            
+                self.new_second_dispersion = self.second_dispersion_history[-1] - ((self.second_dispersion_learning_rate_history[-1]*self.biased_momentum_estimate_history[-1])/(np.sqrt(self.biased_squared_gradient_history[-1])+self.epsilon))
+                self.new_second_dispersion = np.clip(self.new_second_dispersion, self.SECOND_DISPERSION_LOWER_BOUND, self.SECOND_DISPERSION_UPPER_BOUND)
+                self.new_second_dispersion = round(self.new_second_dispersion)
+                self.second_dispersion_history = np.append(self.second_dispersion_history, [self.new_second_dispersion])
+                dispersion_values[0] = self.new_second_dispersion
+
+            elif np.abs(((self.second_dispersion_learning_rate_history[-1]*self.biased_momentum_estimate_history[-1])/(np.sqrt(self.biased_squared_gradient_history[-1])+self.epsilon))) < 1:
+                print("Convergence achieved in second dispersion")
+
+        if self.optimization_status["focus"] == True and self.optimization_status["second_dispersion"] == True:
+            if np.abs((self.third_dispersion_learning_rate_history[-1]*self.biased_momentum_estimate_history[-1])/(np.sqrt(self.biased_squared_gradient_history[-1])+self.epsilon)) > 1:
+                self.new_third_dispersion = self.third_dispersion_history[-1] - ((self.third_dispersion_learning_rate_history[-1]*self.biased_momentum_estimate_history[-1])/(np.sqrt(self.biased_squared_gradient_history[-1])+self.epsilon))
+                self.new_third_dispersion = np.clip(self.new_third_dispersion, self.THIRD_DISPERSION_LOWER_BOUND, self.THIRD_DISPERSION_UPPER_BOUND)
+                self.new_third_dispersion = round(self.new_third_dispersion)
+                self.third_dispersion_history = np.append(self.third_dispersion_history, [self.new_third_dispersion])
+                dispersion_values[1] = self.new_third_dispersion
+
+            elif np.abs(((self.third_dispersion_learning_rate_history[-1]*self.biased_momentum_estimate_history[-1])/(np.sqrt(self.biased_squared_gradient_history[-1])+self.epsilon))) < 1:
+                print("Convergence achieved in third dispersion")
+                
+        # if the change in all variables is less than one (we can not take smaller steps thus this is the optimization boundry)
+        if (
+            np.abs(((self.third_dispersion_learning_rate_history[-1]*self.biased_momentum_estimate_history[-1])/(np.sqrt(self.biased_squared_gradient_history[-1])+self.epsilon))) < 1 and
+            np.abs(((self.second_dispersion_learning_rate_history[-1]*self.biased_momentum_estimate_history[-1])/(np.sqrt(self.biased_squared_gradient_history[-1])+self.epsilon))) < 1 and
+            np.abs(((self.focus_learning_rate_history[-1]*self.biased_momentum_estimate_history[-1])/(np.sqrt(self.biased_squared_gradient_history[-1])+self.epsilon))) < 1
+        ):
+            print("Convergence achieved")
+                    
+        if self.image_groups_processed > 2:
+            # if the count is not changing much this means that we are near the peak 
+            if np.abs(self.count_history[-1] - self.count_history[-2]) <= self.count_change_tolerance:
+                print("Convergence achieved")
 ```
 
-Now the optimization and convergence terms modify to:
+Now the optimization and convergence terms have been modified to:
 ```python
 if (np.abs((self.focus_learning_rate_history[-1]*self.biased_momentum_estimate_history[-1])/(np.sqrt(self.biased_squared_gradient_history[-1])+self.epsilon)) < 1) and self.optimization_print["focus"] == True and not self.optimization_status["second_dispersion"] and not self.optimization_print["second_dispersion"]:
 	self.optimization_status["focus"] = True
