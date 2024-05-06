@@ -5,10 +5,9 @@ from ftplib import FTP
 import shutil
 import random
 from watchdog.events import FileSystemEventHandler
-from pyqtgraph.Qt import QtCore, QtGui, QtWidgets
+from pyqtgraph.Qt import QtCore, QtWidgets
 import sys 
 import pyqtgraph as pg
-from pyqtgraph.Qt import QtGui
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 
@@ -240,10 +239,10 @@ class BetatronApplication(QtWidgets.QApplication):
         median_blured_image = cv2.medianBlur(original_image, 5)
         
         # calculate mean brightness of blured image
-        self.single_self.img_mean_count = median_blured_image.mean()
+        self.single_img_mean_count = median_blured_image.mean()
         
         # return the count (brightness of image)
-        return self.single_self.img_mean_count
+        return self.single_img_mean_count
 
     def initial_optimize(self):
 
@@ -379,16 +378,6 @@ class BetatronApplication(QtWidgets.QApplication):
             elif np.abs(((self.third_dispersion_learning_rate_history[-1]*self.biased_momentum_estimate_history[-1])/(np.sqrt(self.biased_squared_gradient_history[-1])+self.epsilon))) < 1:
                 print("Convergence achieved in third dispersion")
                 
-        # if the change in all variables is less than one (we can not take smaller steps thus this is the optimization boundry)
-        if (
-            np.abs(((self.third_dispersion_learning_rate_history[-1]*self.biased_momentum_estimate_history[-1])/(np.sqrt(self.biased_squared_gradient_history[-1])+self.epsilon))) < 1 and
-            np.abs(((self.second_dispersion_learning_rate_history[-1]*self.biased_momentum_estimate_history[-1])/(np.sqrt(self.biased_squared_gradient_history[-1])+self.epsilon))) < 1 and
-            np.abs(((self.focus_learning_rate_history[-1]*self.biased_momentum_estimate_history[-1])/(np.sqrt(self.biased_squared_gradient_history[-1])+self.epsilon))) < 1
-        ):
-            print("Convergence achieved")
-            
-        # stop optimizing parameter if we reached optimization resolution limit
-        
         if self.image_groups_processed > 2:
             # if the count is not changing much this means that we are near the peak 
             if np.abs(self.count_history[-1] - self.count_history[-2]) <= self.count_change_tolerance:
